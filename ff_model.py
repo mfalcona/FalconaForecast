@@ -17,39 +17,20 @@ import tensorflow as tf
 tf.random.set_seed(2)
 
 
-from tensorflow import keras
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import Dropout
-from tensorflow.keras.layers import Flatten
-from tensorflow.keras.layers import Conv2D
-from tensorflow.keras.layers import MaxPooling2D
-from tensorflow.keras import utils
 from tensorflow.keras import backend as K
 K.image_data_format()
 
 from keras.utils import np_utils
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import KFold
+
 from sklearn.preprocessing import LabelEncoder
-from sklearn.pipeline import Pipeline
 
-from tensorflow.keras import layers
-from tensorflow.keras.layers.experimental import preprocessing
-
-from sklearn.model_selection import train_test_split
-
-import matplotlib.pyplot as plt
 import time
 
 import pandas as pd
 import numpy as np
-
-from keras.wrappers.scikit_learn import KerasClassifier, KerasRegressor
-import eli5
-from eli5.sklearn import PermutationImportance
-from sklearn.metrics import classification_report, confusion_matrix
-
 
 
 train = pd.read_excel('/Users/matthewfalcona/FalconaForecast/seriea_train3.25.21.xlsx')
