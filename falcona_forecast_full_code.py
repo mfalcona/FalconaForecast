@@ -1,5 +1,5 @@
 # falcona forecast full code
-# contains integrated code from ff_data_coll, ff_model_top5, and results_collector for each top 5 leage
+# contains integrated code from ff_data_coll, ff_model_top5, and results_collector for each top 5 league
 # this code will automatically populate predictions, past results, and updated calendar for each league
 # will also update all trends, power ratings, etc
 
@@ -30,18 +30,20 @@ from datetime import date
 curr_date = date.today()
 curr_date = pd.to_datetime(curr_date)
 
+"""
 # scraping Scores and Fixtures site
 ita_url = "https://fbref.com/en/comps/11/schedule/Serie-A-Scores-and-Fixtures"
+#ita_url = "https://fbref.com/en/comps/11/11611/schedule/2022-2023-Serie-A-Scores-and-Fixtures"
 ita_page = requests.get(ita_url)
 ita_soup = BeautifulSoup(ita_page.content, 'html.parser')
-ita_stats = ['date','squad_a','xg_a','score','xg_b','squad_b']
+ita_stats = ['date','home_team','home_xg','score','away_xg','away_team']
 ita_stats_list = [[td.getText() for td in ita_soup.find_all('td', {'data-stat': stat})] for stat in ita_stats]
 seriea_sched = pd.DataFrame(ita_stats_list).T
 
 # building schedule df
 seriea_sched.columns = ['Date','Home','HxG','Score','AxG','Away']
 seriea_sched['Date'] = pd.to_datetime(seriea_sched['Date'])
-seriea_sched[['League','Season']] = ['Serie A','2021-22']
+seriea_sched[['League','Season']] = ['Serie A','2022-23']
 
 # dropping xG and Score from schedule df
 seriea_sched = seriea_sched[['Home','Away','League','Season','Date','HxG','Score','AxG']]
@@ -75,32 +77,22 @@ col_order = ['Home','Away','League','Season','Date','Hscore','Ascore','Result','
 
 seriea_results = seriea_results[col_order]
 
-#seriea_results.to_csv('seriea_results.csv', index=False)
-
-# next steps:
-# expand result collect to all leagues
-# add in odds for upcoming schedule
-# add selenium stats collection script or rewrite using BS
-# incorporate past results with current stats in model train/test data
-# write code to merge 10 day schedule with current stats
-# adjust model to predict only 10 day schedule and save as archive
-# incorporate live forecast grading + lookback for this year using google sheets as source of truth
-
 
 ###################################################################################################
 # spain
 
 spa_url = "https://fbref.com/en/comps/12/schedule/La-Liga-Scores-and-Fixtures"
+#spa_url = "https://fbref.com/en/comps/12/11573/schedule/2022-2023-La-Liga-Scores-and-Fixtures"
 spa_page = requests.get(spa_url)
 spa_soup = BeautifulSoup(spa_page.content, 'html.parser')
-spa_stats = ['date','squad_a','xg_a','score','xg_b','squad_b']
+spa_stats = ['date','home_team','home_xg','score','away_xg','away_team']
 spa_stats_list = [[td.getText() for td in spa_soup.find_all('td', {'data-stat': stat})] for stat in spa_stats]
 laliga_sched = pd.DataFrame(spa_stats_list).T
 
 # building schedule df
 laliga_sched.columns = ['Date','Home','HxG','Score','AxG','Away']
 laliga_sched['Date'] = pd.to_datetime(laliga_sched['Date'])
-laliga_sched[['League','Season']] = ['La Liga','2021-22']
+laliga_sched[['League','Season']] = ['La Liga','2022-23']
 
 # dropping xG and Score from schedule df
 laliga_sched = laliga_sched[['Home','Away','League','Season','Date','HxG','Score','AxG']]
@@ -112,7 +104,7 @@ laliga_results = laliga_sched[laliga_sched['Date'] < curr_date]
 laliga_sched = laliga_sched.drop(['HxG','Score','AxG'], axis = 1)
 
 # building results df
-# laliga_results[['Hscore','Ascore']] = laliga_results['Score'].str.split('-', 1, expand=True)
+#laliga_results[['Hscore','Ascore']] = laliga_results['Score'].str.split('-', 1, expand=True)
 laliga_results = laliga_results.replace('',np.nan,regex=True)
 laliga_results = laliga_results.dropna()
 laliga_results['Hscore'] = laliga_results['Score'].str[:1].astype(int)
@@ -139,16 +131,17 @@ laliga_results = laliga_results[col_order]
 # france
 
 fra_url = "https://fbref.com/en/comps/13/schedule/Ligue-1-Scores-and-Fixtures"
+#fra_url = "https://fbref.com/en/comps/13/11585/schedule/2022-2023-Ligue-1-Scores-and-Fixtures"
 fra_page = requests.get(fra_url)
 fra_soup = BeautifulSoup(fra_page.content, 'html.parser')
-fra_stats = ['date','squad_a','xg_a','score','xg_b','squad_b']
+fra_stats = ['date','home_team','home_xg','score','away_xg','away_team']
 fra_stats_list = [[td.getText() for td in fra_soup.find_all('td', {'data-stat': stat})] for stat in fra_stats]
 ligue1_sched = pd.DataFrame(fra_stats_list).T
 
 # building schedule df
 ligue1_sched.columns = ['Date','Home','HxG','Score','AxG','Away']
 ligue1_sched['Date'] = pd.to_datetime(ligue1_sched['Date'])
-ligue1_sched[['League','Season']] = ['Ligue 1','2021-22']
+ligue1_sched[['League','Season']] = ['Ligue 1','2022-23']
 
 # dropping xG and Score from schedule df
 ligue1_sched = ligue1_sched[['Home','Away','League','Season','Date','HxG','Score','AxG']]
@@ -158,6 +151,7 @@ ligue1_results = ligue1_sched[ligue1_sched['Date'] < curr_date]
 
 # dropping xg and score from schedule df
 ligue1_sched = ligue1_sched.drop(['HxG','Score','AxG'], axis = 1)
+
 
 # building results df
 # ligue1_results[['Hscore','Ascore']] = ligue1_results['Score'].str.split('-', 1, expand=True)
@@ -183,32 +177,36 @@ col_order = ['Home','Away','League','Season','Date','Hscore','Ascore','Result','
 ligue1_results = ligue1_results[col_order]
 
 
+
 #########################################################################################
 # germany
 
 ger_url = "https://fbref.com/en/comps/20/schedule/Bundesliga-Scores-and-Fixtures"
+#ger_url = "https://fbref.com/en/comps/20/11593/schedule/2022-2023-Bundesliga-Scores-and-Fixtures"
 ger_page = requests.get(ger_url)
 ger_soup = BeautifulSoup(ger_page.content, 'html.parser')
-ger_stats = ['date','squad_a','xg_a','score','xg_b','squad_b']
+ger_stats = ['date','home_team','home_xg','score','away_xg','away_team']
 ger_stats_list = [[td.getText() for td in ger_soup.find_all('td', {'data-stat': stat})] for stat in ger_stats]
 bund_sched = pd.DataFrame(ger_stats_list).T
 
 # building schedule df
 bund_sched.columns = ['Date','Home','HxG','Score','AxG','Away']
 bund_sched['Date'] = pd.to_datetime(bund_sched['Date'])
-bund_sched[['League','Season']] = ['Bundesliga','2021-22']
+bund_sched[['League','Season']] = ['Bundesliga','2022-23']
 
 # dropping xG and Score from schedule df
 bund_sched = bund_sched[['Home','Away','League','Season','Date','HxG','Score','AxG']]
 
-# defining results df
-bund_results = bund_sched[bund_sched['Date'] < curr_date]
-
 # dropping xg and score from schedule df
 bund_sched = bund_sched.drop(['HxG','Score','AxG'], axis = 1)
 
+
+# defining results df
+bund_results = bund_sched[bund_sched['Date'] < curr_date]
+
+
 # building results df
-# bund_results[['Hscore','Ascore']] = bund_results['Score'].str.split('-', 1, expand=True)
+#bund_results[['Hscore','Ascore']] = bund_results['Score'].str.split('-', 1, expand=True)
 bund_results = bund_results.replace('',np.nan,regex=True)
 bund_results = bund_results.dropna()
 bund_results['Hscore'] = bund_results['Score'].str[:1].astype(int)
@@ -226,34 +224,43 @@ bund_results['xResult'] = np.select(condlist=[bund_results['xG_Diff'] > 0, bund_
 bund_results['Act_vs_Exp_Result'] = np.select(condlist=[bund_results['Result'] == bund_results['xResult']], choicelist = ['Same'], default = 'Diff')
 bund_results['xTotal'] = bund_results['HxG'] + bund_results['AxG']
 
+
 col_order = ['Home','Away','League','Season','Date','Hscore','Ascore','Result','Total','HxG','AxG', 'xResult', 'xTotal','Act_Diff','xG_Diff','Act_vs_Exp_Result']
 
 bund_results = bund_results[col_order]
 
+bund_results.to_csv('/Users/matthewfalcona/FalconaForecast/data/buli_results_2022_08_25.csv')
+
+
+bund_results = pd.read_csv('/Users/matthewfalcona/FalconaForecast/data/buli_results_2022_08_25.csv')
 
 ######################################################################################
 # england
 
 eng_url = "https://fbref.com/en/comps/9/schedule/Premier-League-Scores-and-Fixtures"
+#eng_url = "https://fbref.com/en/comps/9/11566/schedule/2022-2023-Premier-League-Scores-and-Fixtures"
 eng_page = requests.get(eng_url)
 eng_soup = BeautifulSoup(eng_page.content, 'html.parser')
-eng_stats = ['date','squad_a','xg_a','score','xg_b','squad_b']
+eng_stats = ['date','home_team','home_xg','score','away_xg','away_team']
 eng_stats_list = [[td.getText() for td in eng_soup.find_all('td', {'data-stat': stat})] for stat in eng_stats]
 epl_sched = pd.DataFrame(eng_stats_list).T
 
 # building schedule df
 epl_sched.columns = ['Date','Home','HxG','Score','AxG','Away']
 epl_sched['Date'] = pd.to_datetime(epl_sched['Date'])
-epl_sched[['League','Season']] = ['Premier League','2021-22']
+epl_sched[['League','Season']] = ['Premier League','2022-23']
 
 # dropping xG and Score from schedule df
 epl_sched = epl_sched[['Home','Away','League','Season','Date','HxG','Score','AxG']]
 
+# dropping xg and score from schedule df
+epl_sched = epl_sched.drop(['HxG','Score','AxG'], axis = 1)
+
 # defining results df
 epl_results = epl_sched[epl_sched['Date'] < curr_date]
 
-# dropping xg and score from schedule df
-epl_sched = epl_sched.drop(['HxG','Score','AxG'], axis = 1)
+
+#uncomment after first match days
 
 # building results df
 # epl_results[['Hscore','Ascore']] = epl_results['Score'].str.split('-', 1, expand=True)
@@ -278,12 +285,19 @@ col_order = ['Home','Away','League','Season','Date','Hscore','Ascore','Result','
 
 epl_results = epl_results[col_order]
 
+epl_results.to_csv('/Users/matthewfalcona/FalconaForecast/data/epl_results_2022_08_25.csv')
+
+
+epl_results = pd.read_csv('/Users/matthewfalcona/FalconaForecast/data/epl_results_2022_08_25.csv')
+
+
 # compiling forecast/schedule df
 forecast_sched = seriea_sched
 forecast_sched = forecast_sched.append(ligue1_sched)
 forecast_sched = forecast_sched.append(epl_sched)
 forecast_sched = forecast_sched.append(bund_sched)
 forecast_sched = forecast_sched.append(laliga_sched)
+forecast_sched = forecast_sched.reset_index()
 
 # normalizing team names
 forecast_sched = forecast_sched.replace("Eint Frankfurt", "Frankfurt", regex = True)
@@ -379,16 +393,21 @@ forecast_sched = forecast_sched.replace('Manchester United','ManUtd', regex=True
 forecast_sched = forecast_sched.replace('Brighton and Hove Albion','Brighton', regex=True)
 forecast_sched = forecast_sched.replace('Leeds United','LeedsUtd', regex=True)
 forecast_sched = forecast_sched.replace('Wolverhampton Wanderers','Wolves', regex=True)
-forecast_sched = forecast_sched.replace('West Ham United','WestHam', regex=True)
 forecast_sched = forecast_sched.replace('Tottenham Hotspur','Tottenham', regex=True)
 forecast_sched = forecast_sched.replace('Crystal Palace','CrystalPalace', regex=True)
 forecast_sched = forecast_sched.replace('Saint Etienne','Saint-Etienne', regex=True)
 forecast_sched = forecast_sched.replace('Stade de Reims','Reims', regex=True)
 forecast_sched = forecast_sched.replace('AS Monaco','Monaco', regex=True)
 forecast_sched = forecast_sched.replace('RC Lens','Lens', regex=True)
+forecast_sched = forecast_sched.replace("Nott'ham Forest", "Forest", regex=True)
+forecast_sched = forecast_sched.replace('Nottingham Forest','Forest', regex=True)
+forecast_sched = forecast_sched.replace('Werder Bremen','WerderBremen', regex=True)
+forecast_sched = forecast_sched.replace('Almería','Almeria', regex=True)
+forecast_sched = forecast_sched.replace('AC Ajaccio','Ajaccio', regex=True)
 
 forecast_sched['Match'] = forecast_sched['Home'] + '-' + forecast_sched['Away']
 
+# uncomment after first matchdays
 
 
 # compiling results df
@@ -397,6 +416,7 @@ results = results.append(epl_results)
 results = results.append(ligue1_results)
 results = results.append(laliga_results)
 results = results.append(bund_results)
+results = results.reset_index()
 
 # normalizing team names
 results = results.replace("Eint Frankfurt", "Frankfurt", regex = True)
@@ -492,17 +512,24 @@ results = results.replace('Manchester United','ManUtd', regex=True)
 results = results.replace('Brighton and Hove Albion','Brighton', regex=True)
 results = results.replace('Leeds United','LeedsUtd', regex=True)
 results = results.replace('Wolverhampton Wanderers','Wolves', regex=True)
-results = results.replace('West Ham United','WestHam', regex=True)
 results = results.replace('Tottenham Hotspur','Tottenham', regex=True)
 results = results.replace('Crystal Palace','CrystalPalace', regex=True)
 results = results.replace('Saint Etienne','Saint-Etienne', regex=True)
 results = results.replace('Stade de Reims','Reims', regex=True)
 results = results.replace('AS Monaco','Monaco', regex=True)
 results = results.replace('RC Lens','Lens', regex=True)
+results = results.replace("Nott'ham Forest", "Forest", regex=True)
+results = results.replace('Nottingham Forest','Forest', regex=True)
+results = results.replace('Werder Bremen','WerderBremen', regex=True)
+results = results.replace('Almería','Almeria', regex=True)
+results = results.replace('AC Ajaccio','Ajaccio', regex=True)
 
 results['ou'] = np.select(condlist=[results['Total'] > 2.5, results['Total'] < 2.5], choicelist=['Over','Under'], default='Push')
 
-results.to_csv('/Users/matthewfalcona/FalconaForecast/datasets/results_{current_date}.csv'.format(current_date=date.today()), index = False)
+results.to_csv('/Users/matthewfalcona/FalconaForecast/data/results_{current_date}.csv'.format(current_date=date.today()), index = False)
+"""
+
+results = pd.read_csv('/Users/matthewfalcona/FalconaForecast/data/results_{current_date}.csv'.format(current_date=date.today()))
 
 ##################################################################################
 # odds importer
@@ -941,6 +968,11 @@ odds_table_tot = odds_table_tot.replace('Saint Etienne','Saint-Etienne', regex=T
 odds_table_tot = odds_table_tot.replace('Stade de Reims','Reims', regex=True)
 odds_table_tot = odds_table_tot.replace('AS Monaco','Monaco', regex=True)
 odds_table_tot = odds_table_tot.replace('RC Lens','Lens', regex=True)
+odds_table_tot = odds_table_tot.replace("Nott'ham Forest", "Forest", regex=True)
+odds_table_tot = odds_table_tot.replace('Nottingham Forest','Forest', regex=True)
+odds_table_tot = odds_table_tot.replace('Werder Bremen','WerderBremen', regex=True)
+odds_table_tot = odds_table_tot.replace('Almería','Almeria', regex=True)
+odds_table_tot = odds_table_tot.replace('AC Ajaccio','Ajaccio', regex=True)
 
 # creating unique matchup field
 odds_table_tot['Match'] = odds_table_tot['home_team'] + '-' + odds_table_tot['away_team']
@@ -987,8 +1019,8 @@ odds_table_hda = odds_table_hda.replace("Crystal Palace", "CrystalPalace", regex
 odds_table_hda = odds_table_hda.replace("Swansea City", "Swansea", regex = True)
 odds_table_hda = odds_table_hda.replace("Stoke City", "StokeCity", regex = True)
 odds_table_hda = odds_table_hda.replace("West Brom", "WestBrom", regex = True)
-odds_table_hda = odds_table_hda.replace("West Ham", "WestHam", regex = True)
 odds_table_hda = odds_table_hda.replace("West Ham United", "WestHam", regex = True)
+odds_table_hda = odds_table_hda.replace("West Ham", "WestHam", regex = True)
 odds_table_hda = odds_table_hda.replace("Cardiff City", "Cardiff", regex = True)
 odds_table_hda = odds_table_hda.replace("Sheffield Utd", "SheffieldUtd", regex = True)
 odds_table_hda = odds_table_hda.replace("Norwich City", "NorwichCity", regex = True)
@@ -1059,6 +1091,11 @@ odds_table_hda = odds_table_hda.replace('Saint Etienne','Saint-Etienne', regex=T
 odds_table_hda = odds_table_hda.replace('Stade de Reims','Reims', regex=True)
 odds_table_hda = odds_table_hda.replace('AS Monaco','Monaco', regex=True)
 odds_table_hda = odds_table_hda.replace('RC Lens','Lens', regex=True)
+odds_table_hda = odds_table_hda.replace("Nott'ham Forest", "Forest", regex=True)
+odds_table_hda = odds_table_hda.replace('Nottingham Forest','Forest', regex=True)
+odds_table_hda = odds_table_hda.replace('Werder Bremen','WerderBremen', regex=True)
+odds_table_hda = odds_table_hda.replace('Almería','Almeria', regex=True)
+odds_table_hda = odds_table_hda.replace('AC Ajaccio','Ajaccio', regex=True)
 
 # creating unique matchup field
 odds_table_hda['Match'] = odds_table_hda['home_team'] + '-' + odds_table_hda['away_team']
@@ -1070,13 +1107,21 @@ odds_table_hda = odds_table_hda.reset_index()
 odds_table_hda['price'] = np.where((odds_table_hda['price'] < 100) & (odds_table_hda['price'] >= -100), 100, odds_table_hda['price'])
 odds_table_hda['price'] = odds_table_hda['price'].astype(int)
 
-odds_table_hda.to_csv('/Users/matthewfalcona/FalconaForecast/datasets/odds_hda_{current_date}.csv'.format(current_date=date.today()), index = False)
-odds_tot.to_csv('/Users/matthewfalcona/FalconaForecast/datasets/odds_tot_{current_date}.csv'.format(current_date=date.today()), index = False)
+odds_table_hda.to_csv('/Users/matthewfalcona/FalconaForecast/data/odds_hda_{current_date}.csv'.format(current_date=date.today()), index = False)
+odds_tot.to_csv('/Users/matthewfalcona/FalconaForecast/data/odds_tot_{current_date}.csv'.format(current_date=date.today()), index = False)
+
+odds_table_hda = pd.read_csv('/Users/matthewfalcona/FalconaForecast/data/odds_hda_{current_date}.csv'.format(current_date=date.today()))
+odds_tot = pd.read_csv('/Users/matthewfalcona/FalconaForecast/data/odds_tot_{current_date}.csv'.format(current_date=date.today()))
+
 
 odds_hda = odds_table_hda
 
 ########################################################################################
 # collecting current stats
+
+# uncomment after first games are played
+
+"""
 
 import io
 import os
@@ -1097,7 +1142,8 @@ from selenium.webdriver.support import expected_conditions as EC
 # webdrivermanager
 # VE in falconaforecast dir
 
-psxg = []
+gf = []
+xg = []
 gp = []
 npxg = []
 npxG_Sh = []
@@ -1106,6 +1152,8 @@ prog = []
 sca90 = []
 gca90 = []
 poss = []
+ga = []
+psxg = []
 
 
 def wait_until_element_is_present_by_id(driver, element):
@@ -1117,11 +1165,11 @@ def wait_until_element_is_present_by_id(driver, element):
 
 
 def get_by_type(locator_type):
-    """
-        def which generate locator type
-        :param locator_type: str set by def which implement on SeleniumDriver class
-        :return: tag type or False
-        """
+    
+        #def which generate locator type
+        #:param locator_type: str set by def which implement on SeleniumDriver class
+        #:return: tag type or False
+        
     locator_type = locator_type.lower()
     if locator_type == 'id':
         return By.ID
@@ -1266,21 +1314,24 @@ def write_table_data_to_csv(data_frames):
         print(BASE_DIR)
 
         col_df = {
+            'ga': data_frames[0]['GA'],
             'psxg': data_frames[0]['PSxG'],
+            'squad': data_frames[1]['Squad'],
             'gp': data_frames[1]['90s'],
-            'Squad': data_frames[1]['Squad'],
+            'gf': data_frames[1]['Gls'],
+            'xg': data_frames[1]['xG'],
             'npxg': data_frames[1]['npxG'],
             'npxG/Sh': data_frames[1]['npxG/Sh'],
             'np:G-xG': data_frames[1]['np:G-xG'],
-            'Prog': data_frames[2]['Prog'],
-            'SCA90': data_frames[3]['SCA90'],
-            'GCA90': data_frames[3]['GCA90'],
-            'Poss': data_frames[4]['Poss']
+            'prog': data_frames[2]['Prog'],
+            'sca90': data_frames[3]['SCA90'],
+            'gca90': data_frames[3]['GCA90'],
+            'poss': data_frames[4]['Poss']
         }
 
         ita_curr_stats = pd.DataFrame(col_df)
         #df = pd.to_flat_index(col_df).union()
-        ita_curr_stats.to_csv('{base_dir}/FalconaForecast/datasets/seriea_{current_date}.csv'.format(base_dir=BASE_DIR, current_date=date.today()), index = False)
+        ita_curr_stats.to_csv('{base_dir}/data/seriea_{current_date}.csv'.format(base_dir=BASE_DIR, current_date=date.today()), index = False)
     except:
         raise Exception("Could not write column df to CSV. ")
 
@@ -1294,7 +1345,8 @@ get_web_data()
 ###########
 # spain data coll
 
-psxg = []
+gf = []
+xg = []
 gp = []
 npxg = []
 npxG_Sh = []
@@ -1303,6 +1355,8 @@ prog = []
 sca90 = []
 gca90 = []
 poss = []
+ga = []
+psxg = []
 
 
 def wait_until_element_is_present_by_id(driver, element):
@@ -1314,11 +1368,11 @@ def wait_until_element_is_present_by_id(driver, element):
 
 
 def get_by_type(locator_type):
-    """
-        def which generate locator type
-        :param locator_type: str set by def which implement on SeleniumDriver class
-        :return: tag type or False
-        """
+    
+        #def which generate locator type
+        #:param locator_type: str set by def which implement on SeleniumDriver class
+        #:return: tag type or False
+        
     locator_type = locator_type.lower()
     if locator_type == 'id':
         return By.ID
@@ -1529,21 +1583,24 @@ def write_table_data_to_csv(data_frames):
         print(BASE_DIR)
 
         col_df = {
+            'ga': data_frames[0]['GA'],
             'psxg': data_frames[0]['PSxG'],
+            'squad': data_frames[1]['Squad'],
             'gp': data_frames[1]['90s'],
-            'Squad': data_frames[1]['Squad'],
+            'gf': data_frames[1]['Gls'],
+            'xg': data_frames[1]['xG'],
             'npxg': data_frames[1]['npxG'],
             'npxG/Sh': data_frames[1]['npxG/Sh'],
             'np:G-xG': data_frames[1]['np:G-xG'],
-            'Prog': data_frames[2]['Prog'],
-            'SCA90': data_frames[3]['SCA90'],
-            'GCA90': data_frames[3]['GCA90'],
-            'Poss': data_frames[4]['Poss']
+            'prog': data_frames[2]['Prog'],
+            'sca90': data_frames[3]['SCA90'],
+            'gca90': data_frames[3]['GCA90'],
+            'poss': data_frames[4]['Poss']
         }
 
         spa_curr_stats = pd.DataFrame(col_df)
         #df = pd.to_flat_index(col_df).union()
-        spa_curr_stats.to_csv('{base_dir}/FalconaForecast/datasets/laliga_{current_date}.csv'.format(base_dir=BASE_DIR, current_date=date.today()), index = False)
+        spa_curr_stats.to_csv('{base_dir}/data/laliga_{current_date}.csv'.format(base_dir=BASE_DIR, current_date=date.today()), index = False)
     except:
         raise Exception("Could not write column df to CSV. ")
 
@@ -1557,7 +1614,8 @@ get_web_data()
 ##########################################################
 # germany data coll
 
-psxg = []
+gf = []
+xg = []
 gp = []
 npxg = []
 npxG_Sh = []
@@ -1566,6 +1624,8 @@ prog = []
 sca90 = []
 gca90 = []
 poss = []
+ga = []
+psxg = []
 
 
 def wait_until_element_is_present_by_id(driver, element):
@@ -1577,11 +1637,11 @@ def wait_until_element_is_present_by_id(driver, element):
 
 
 def get_by_type(locator_type):
-    """
-        def which generate locator type
-        :param locator_type: str set by def which implement on SeleniumDriver class
-        :return: tag type or False
-        """
+    
+    #    def which generate locator type
+     #   :param locator_type: str set by def which implement on SeleniumDriver class
+      #  :return: tag type or False
+        
     locator_type = locator_type.lower()
     if locator_type == 'id':
         return By.ID
@@ -1652,6 +1712,8 @@ def get_table_data(driver, table_id, body_tag, row_tag):
         for row in rows:
             row_class = row.get_attribute("class")
 
+            # bundesliga
+            
             if "Eint Frankfurt" in row.text:
                 print(row.text)
                 res_str = re.sub("Eint Frankfurt", "Frankfurt", row.text)
@@ -1675,19 +1737,19 @@ def get_table_data(driver, table_id, body_tag, row_tag):
                 res_str = re.sub("Bayern Munich", "Bayern", row.text)
                 print(res_str)
                 team_data.append(res_str)
-
+            
             elif "Mainz 05" in row.text:
                 print(row.text)
                 res_str = re.sub("Mainz 05", "Mainz", row.text)
                 print(res_str)
                 team_data.append(res_str)
-
+            
             elif "Greuther Fürth" in row.text:
                 print(row.text)
                 res_str = re.sub("Greuther Fürth", "GreutherFurth", row.text)
                 print(res_str)
                 team_data.append(res_str)
-
+            
             elif "Union Berlin" in row.text:
                 print(row.text)
                 res_str = re.sub("Union Berlin", "UnionBerlin", row.text)
@@ -1714,8 +1776,8 @@ def get_table_data(driver, table_id, body_tag, row_tag):
 
             elif "Düsseldorf" in row.text:
                 print(row.text)
-                print(res_str)
                 res_str = re.sub("Düsseldorf", "Dusseldorf", row.text)
+                print(res_str)
                 team_data.append(res_str)
 
             elif "Paderborn 07" in row.text:
@@ -1814,20 +1876,23 @@ def write_table_data_to_csv(data_frames):
         print(BASE_DIR)
 
         col_df = {
+            'ga': data_frames[0]['GA'],
             'psxg': data_frames[0]['PSxG'],
+            'squad': data_frames[1]['Squad'],
             'gp': data_frames[1]['90s'],
-            'Squad': data_frames[1]['Squad'],
+            'gf': data_frames[1]['Gls'],
+            'xg': data_frames[1]['xG'],
             'npxg': data_frames[1]['npxG'],
             'npxG/Sh': data_frames[1]['npxG/Sh'],
             'np:G-xG': data_frames[1]['np:G-xG'],
-            'Prog': data_frames[2]['Prog'],
-            'SCA90': data_frames[3]['SCA90'],
-            'GCA90': data_frames[3]['GCA90'],
-            'Poss': data_frames[4]['Poss']
+            'prog': data_frames[2]['Prog'],
+            'sca90': data_frames[3]['SCA90'],
+            'gca90': data_frames[3]['GCA90'],
+            'poss': data_frames[4]['Poss']
         }
 
         ger_curr_stats = pd.DataFrame(col_df)
-        ger_curr_stats.to_csv('{base_dir}/FalconaForecast/datasets/bun_{current_date}.csv'.format(base_dir=BASE_DIR, current_date=date.today()), index = False)
+        ger_curr_stats.to_csv('{base_dir}/data/bun_{current_date}.csv'.format(base_dir=BASE_DIR, current_date=date.today()), index = False)
     except:
         raise Exception("Could not write column df to CSV. ")
 
@@ -1840,7 +1905,8 @@ get_web_data()
 ####################################################
 # france data coll
 
-psxg = []
+gf = []
+xg = []
 gp = []
 npxg = []
 npxG_Sh = []
@@ -1849,6 +1915,8 @@ prog = []
 sca90 = []
 gca90 = []
 poss = []
+ga = []
+psxg = []
 
 
 def wait_until_element_is_present_by_id(driver, element):
@@ -1860,11 +1928,11 @@ def wait_until_element_is_present_by_id(driver, element):
 
 
 def get_by_type(locator_type):
-    """
-        def which generate locator type
-        :param locator_type: str set by def which implement on SeleniumDriver class
-        :return: tag type or False
-        """
+    
+    #    def which generate locator type
+     #   :param locator_type: str set by def which implement on SeleniumDriver class
+      #  :return: tag type or False
+        
     locator_type = locator_type.lower()
     if locator_type == 'id':
         return By.ID
@@ -2027,21 +2095,24 @@ def write_table_data_to_csv(data_frames):
         print(BASE_DIR)
 
         col_df = {
+            'ga': data_frames[0]['GA'],
             'psxg': data_frames[0]['PSxG'],
+            'squad': data_frames[1]['Squad'],
             'gp': data_frames[1]['90s'],
-            'Squad': data_frames[1]['Squad'],
+            'gf': data_frames[1]['Gls'],
+            'xg': data_frames[1]['xG'],
             'npxg': data_frames[1]['npxG'],
             'npxG/Sh': data_frames[1]['npxG/Sh'],
             'np:G-xG': data_frames[1]['np:G-xG'],
-            'Prog': data_frames[2]['Prog'],
-            'SCA90': data_frames[3]['SCA90'],
-            'GCA90': data_frames[3]['GCA90'],
-            'Poss': data_frames[4]['Poss']
+            'prog': data_frames[2]['Prog'],
+            'sca90': data_frames[3]['SCA90'],
+            'gca90': data_frames[3]['GCA90'],
+            'poss': data_frames[4]['Poss']
         }
 
         fra_curr_stats = pd.DataFrame(col_df)
         #df = pd.to_flat_index(col_df).union()
-        fra_curr_stats.to_csv('{base_dir}/FalconaForecast/datasets/ligue1_{current_date}.csv'.format(base_dir=BASE_DIR, current_date=date.today()), index = False)
+        fra_curr_stats.to_csv('{base_dir}/data/ligue1_{current_date}.csv'.format(base_dir=BASE_DIR, current_date=date.today()), index = False)
     except:
         raise Exception("Could not write column df to CSV. ")
 
@@ -2054,7 +2125,8 @@ get_web_data()
 #########################################
 # epl data coll
 
-psxg = []
+gf = []
+xg = []
 gp = []
 npxg = []
 npxG_Sh = []
@@ -2063,6 +2135,8 @@ prog = []
 sca90 = []
 gca90 = []
 poss = []
+ga = []
+psxg = []
 
 
 def wait_until_element_is_present_by_id(driver, element):
@@ -2074,11 +2148,11 @@ def wait_until_element_is_present_by_id(driver, element):
 
 
 def get_by_type(locator_type):
-    """
-        def which generate locator type
-        :param locator_type: str set by def which implement on SeleniumDriver class
-        :return: tag type or False
-        """
+    
+       # def which generate locator type
+        #:param locator_type: str set by def which implement on SeleniumDriver class
+        #:return: tag type or False
+        
     locator_type = locator_type.lower()
     if locator_type == 'id':
         return By.ID
@@ -2295,24 +2369,26 @@ def write_table_data_to_csv(data_frames):
         print(BASE_DIR)
 
         col_df = {
+            'ga': data_frames[0]['GA'],
             'psxg': data_frames[0]['PSxG'],
+            'squad': data_frames[1]['Squad'],
             'gp': data_frames[1]['90s'],
-            'Squad': data_frames[1]['Squad'],
+            'gf': data_frames[1]['Gls'],
+            'xg': data_frames[1]['xG'],
             'npxg': data_frames[1]['npxG'],
             'npxG/Sh': data_frames[1]['npxG/Sh'],
             'np:G-xG': data_frames[1]['np:G-xG'],
-            'Prog': data_frames[2]['Prog'],
-            'SCA90': data_frames[3]['SCA90'],
-            'GCA90': data_frames[3]['GCA90'],
-            'Poss': data_frames[4]['Poss']
+            'prog': data_frames[2]['Prog'],
+            'sca90': data_frames[3]['SCA90'],
+            'gca90': data_frames[3]['GCA90'],
+            'poss': data_frames[4]['Poss']
         }
 
         eng_curr_stats = pd.DataFrame(col_df)
         #df = pd.to_flat_index(col_df).union()
-        eng_curr_stats.to_csv('{base_dir}/FalconaForecast/datasets/epl_{current_date}.csv'.format(base_dir=BASE_DIR, current_date=date.today()), index = False)
+        eng_curr_stats.to_csv('/Users/matthewfalcona/FalconaForecast/data/epl_{current_date}.csv'.format(base_dir=BASE_DIR, current_date=date.today()), index = False)
     except:
         raise Exception("Could not write column df to CSV. ")
-
 
 def get_project_root():
     print(os.path.abspath(os.path.dirname(__file__)))
@@ -2321,39 +2397,50 @@ def get_project_root():
 get_web_data()
 
 
-seriea_raw = pd.read_csv('/Users/matthewfalcona/FalconaForecast/datasets/seriea_{current_date}.csv'.format(current_date=date.today()))
-ligue1_raw = pd.read_csv('/Users/matthewfalcona/FalconaForecast/datasets/ligue1_{current_date}.csv'.format(current_date=date.today()))
-laliga_raw = pd.read_csv('/Users/matthewfalcona/FalconaForecast/datasets/laliga_{current_date}.csv'.format(current_date=date.today()))
-bun_raw = pd.read_csv('/Users/matthewfalcona/FalconaForecast/datasets/bun_{current_date}.csv'.format(current_date=date.today()))
-epl_raw = pd.read_csv('/Users/matthewfalcona/FalconaForecast/datasets/epl_{current_date}.csv'.format(current_date=date.today()))
+seriea_raw = pd.read_csv('/Users/matthewfalcona/FalconaForecast/data/seriea_{current_date}.csv'.format(current_date=date.today()))
+ligue1_raw = pd.read_csv('/Users/matthewfalcona/FalconaForecast/data/ligue1_{current_date}.csv'.format(current_date=date.today()))
+laliga_raw = pd.read_csv('/Users/matthewfalcona/FalconaForecast/data/laliga_{current_date}.csv'.format(current_date=date.today()))
+bun_raw = pd.read_csv('/Users/matthewfalcona/FalconaForecast/data/bun_{current_date}.csv'.format(current_date=date.today()))
+epl_raw = pd.read_csv('/Users/matthewfalcona/FalconaForecast/data/epl_{current_date}.csv'.format(current_date=date.today()))
 
 
 ##########################################################################################
 # merging top 5 combined stats
 
+
 top5_raw = seriea_raw.append(ligue1_raw)
 top5_raw = top5_raw.append(laliga_raw)
 top5_raw = top5_raw.append(bun_raw)
 top5_raw = top5_raw.append(epl_raw)
+top5_raw = top5_raw.reset_index()
 
-top5_raw['psxg'] = top5_raw['psxg'] / top5_raw['gp']
+top5_raw['gf'] = top5_raw['gf'] / top5_raw['gp']
+top5_raw['xg'] = top5_raw['xg'] / top5_raw['gp']
 top5_raw['npxg'] = top5_raw['npxg'] / top5_raw['gp']
 top5_raw['np:G-xG'] = top5_raw['np:G-xG'] / top5_raw['gp']
-top5_raw['Prog'] = top5_raw['Prog'] / top5_raw['gp']
-top5_stats = top5_raw.drop('gp', axis = 1)
-top5_stats
+top5_raw['prog'] = top5_raw['prog'] / top5_raw['gp']
+top5_raw['psxg'] = top5_raw['psxg'] / top5_raw['gp']
+top5_raw['ga'] = top5_raw['ga'] / top5_raw['gp']
+top5_raw['gd'] = top5_raw['gf'] - top5_raw['ga']
+top5_stats = top5_raw
 
-top5_stats.to_csv('/Users/matthewfalcona/FalconaForecast/datasets/top5_stats_{current_date}.csv'.format(current_date=date.today()), index = False)
+top5_stats.to_csv('/Users/matthewfalcona/FalconaForecast/data/top5_stats_{current_date}.csv'.format(current_date=date.today()), index = False)
+"""
+
+
+top5_stats = pd.read_csv('/Users/matthewfalcona/FalconaForecast/data/top5_stats_{current_date}.csv'.format(current_date=date.today()))
 
 top5_stats_home = top5_stats
-top5_stats_home = top5_stats_home.rename(columns = {'Squad':'Home'})
-top5_stats_home = top5_stats_home[['Home', 'npxg','npxG/Sh','np:G-xG','Prog','SCA90','GCA90','Poss','psxg']]
+top5_stats_home = top5_stats_home.rename(columns = {'squad':'Home'})
+top5_stats_home = top5_stats_home[['Home', 'npxg','npxG/Sh','np:G-xG','prog','sca90','gca90','poss','psxg','ga','gf','xg','gd']]
 top5_stats_home
 
 top5_stats_away = top5_stats
-top5_stats_away = top5_stats_away.rename(columns = {'Squad':'Away'})
-top5_stats_away = top5_stats_away[['Away', 'npxg','npxG/Sh','np:G-xG','Prog','SCA90','GCA90','Poss','psxg']]
+top5_stats_away = top5_stats_away.rename(columns = {'squad':'Away'})
+top5_stats_away = top5_stats_away[['Away', 'npxg','npxG/Sh','np:G-xG','prog','sca90','gca90','poss','psxg','ga','gf','xg','gd']]
 top5_stats_away
+
+forecast_sched = pd.read_csv('/Users/matthewfalcona/FalconaForecast/data/forecast_sched_raw_{current_date}.csv'.format(current_date=date.today()))
 
 forecast_sched = pd.merge(forecast_sched, top5_stats_home, on = 'Home', how = "left")
 forecast_sched = pd.merge(forecast_sched, top5_stats_away, on = 'Away', how = "left")
@@ -2369,26 +2456,65 @@ forecast_sched.reset_index(drop=True,inplace=True)
 print('forecast_sched:')
 print(forecast_sched.head(25))
 
-forecast_sched.to_csv('/Users/matthewfalcona/FalconaForecast/datasets/forecast_sched_{current_date}.csv'.format(current_date=date.today()), index = False)
+forecast_sched = forecast_sched[['Home','Away','League','Season','Date','Match', 
+                                    'gf_x','ga_x','gd_x','xg_x','npxg_x','npxG/Sh_x','np:G-xG_x',
+                                    'prog_x', 'sca90_x', 'gca90_x', 'poss_x','psxg_x',
+                                    'gf_y','ga_y','gd_y','xg_y','npxg_y','npxG/Sh_y','np:G-xG_y',
+                                    'prog_y', 'sca90_y', 'gca90_y', 'poss_y', 'psxg_y']]
+
+
+forecast_sched.to_csv('/Users/matthewfalcona/FalconaForecast/data/forecast_sched_{current_date}.csv'.format(current_date=date.today()), index = False)
 
 # creating train and test sets for results model
 
 # replicating hist table for results
+# uncomment after first matchdays
+
+results = pd.read_csv('/Users/matthewfalcona/FalconaForecast/data/results_{current_date}.csv'.format(current_date=date.today()))
 
 results_stats = pd.merge(results, top5_stats_home, on = 'Home', how = 'left')
 results_stats = pd.merge(results_stats, top5_stats_away, on = 'Away', how = 'left')
 
+results_stats.columns
+
 # making results stats line up with top5_hist df
 
-results_train = results_stats.drop(['Home','Away','League','Season','Date','Hscore','Ascore','Total', 'ou','HxG','AxG', 'xResult', 'xTotal','Act_Diff','xG_Diff','Act_vs_Exp_Result'], axis=1)
+results_train = results_stats.drop(['Home','Away','League','Season','Date','Hscore','Ascore',
+                                    'Total', 'ou','HxG','AxG', 'xResult', 'xTotal','Act_Diff',
+                                    'xG_Diff','Act_vs_Exp_Result'], axis=1)
 
-top5_hist = pd.read_csv('/Users/matthewfalcona/FalconaForecast/datasets/top5_hist.csv')
+#results_train.columns
+results_train = results_train[['Result', 'gf_x','ga_x','gd_x',
+                                'xg_x','npxg_x','npxG/Sh_x', 'np:G-xG_x',
+                                'prog_x','sca90_x','gca90_x','poss_x','psxg_x',   
+                                'gf_y','ga_y','gd_y',
+                                'xg_y','npxg_y','npxG/Sh_y','np:G-xG_y',
+                                'prog_y','sca90_y','gca90_y', 'poss_y', 'psxg_y']]
 
-top5_result_tt = top5_hist.drop(['Wk','Date','Home','Away','Total','ou'], axis = 1)
+print(results_train.columns)
+
+top5_hist = pd.read_csv('/Users/matthewfalcona/FalconaForecast/data/top5_hist.csv')
+
+top5_result_tt = top5_hist.drop(['Total','ou','Wk', 'Day', 'Date', 'Time',
+                                'Home', 'xG', 'Score', 'xG.1', 'Away', 'Attendance',
+                                'Venue', 'Referee', 'Match Report', 'Notes',
+                                'Unnamed: 0_x', 'Unnamed: 0_y'], axis = 1)
+
+#top5_result_tt.columns
+top5_result_tt = top5_result_tt[['Result', 'gf_x','ga_x','gd_x',
+                                'xg_x','npxg_x','npxG/Sh_x', 'np:G-xG_x',
+                                'prog_x','sca90_x','gca90_x','poss_x','psxg_x',   
+                                'gf_y','ga_y','gd_y',
+                                'xg_y','npxg_y','npxG/Sh_y','np:G-xG_y',
+                                'prog_y','sca90_y','gca90_y', 'poss_y', 'psxg_y']]
 
 top5_result_tt = top5_result_tt.append(results_train)
 
+top5_result_tt = top5_result_tt.dropna()
+top5_result_tt.reset_index(drop=True, inplace=True)
+
 print('top5_result_tt:')
+print(top5_result_tt.shape)
 print(top5_result_tt.head(25))
 
 # feeding into hda model
@@ -2426,7 +2552,14 @@ import numpy as np
 
 
 y = top5_result_tt.Result
-x = top5_result_tt.drop('Result', axis = 1)
+x = top5_result_tt.drop(['Result','gd_x','gd_y',
+                        'gf_y', 'xg_y','gf_x','xg_x', 'np:G-xG_y', 'np:G-xG_x',
+                        'npxG/Sh_x','npxG/Sh_y','psxg_y','psxg_x'], axis = 1)
+
+#x.columns = 12
+
+x = x[['npxg_x','ga_x','sca90_x','gca90_x','prog_x','poss_x',
+        'ga_y','npxg_y', 'prog_y', 'sca90_y', 'gca90_y', 'poss_y']]
 
 x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.2)
 
@@ -2458,8 +2591,8 @@ y_train.shape
 
 def base_model():
     model = Sequential() # for training and inference features
-    model.add(Dense(50, input_dim = 16, kernel_initializer='normal', activation='tanh'))
-    model.add(Dropout(.1))
+    model.add(Dense(50, input_dim = 12, kernel_initializer='normal', activation='tanh'))
+    model.add(Dropout(.12))
     model.add(Dense(3, kernel_initializer='normal', activation='softmax'))
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics = ['accuracy'])
     return(model)
@@ -2485,19 +2618,26 @@ print(final_time)
 
 # predictions
 
-forecast_result_pred = forecast_sched.drop(columns = ['Home','Away','League','Season','Date','Match'])
+forecast_result_pred = forecast_sched.drop(columns = ['Home','Away','League','Season','Date','Match',
+                                                    'np:G-xG_y', 'np:G-xG_x','npxG/Sh_x','npxG/Sh_y','psxg_y','psxg_x'])
+
+forecast_result_pred.columns
+
+forecast_result_pred = forecast_result_pred[['npxg_x','ga_x','sca90_x','gca90_x','prog_x','poss_x',
+                                            'ga_y','npxg_y', 'prog_y', 'sca90_y', 'gca90_y', 'poss_y']]
 
 forecast_results = model.predict(forecast_result_pred)
 
 forecast_results = pd.DataFrame(forecast_results)
 
 forecast_results.columns = ['Away_pred','Draw_pred','Home_pred']
+forecast_results = forecast_results[['Home_pred','Draw_pred','Away_pred']]
 
 print('forecast_results:')
 print(forecast_results.shape)
 print(forecast_results.head(50))
 
-forecast_results.to_csv('/Users/matthewfalcona/FalconaForecast/datasets/forecast_hda_{current_date}.csv'.format(current_date=date.today()), index = False)
+forecast_results.to_csv('/Users/matthewfalcona/FalconaForecast/data/forecast_hda_{current_date}.csv'.format(current_date=date.today()), index = False)
 
 forecast = forecast_sched.merge(forecast_results, left_index=True, right_index=True)
 #forecast = forecast_sched.join(forecast_results)
@@ -2509,38 +2649,78 @@ print(forecast.head(50))
 
 # creating train and test sets for totals model
 
-"""
-results = pd.read_csv('/Users/matthewfalcona/FalconaForecast/datasets/results_{current_date}.csv'.format(current_date=date.today()))
+results = pd.read_csv('/Users/matthewfalcona/FalconaForecast/data/results_{current_date}.csv'.format(current_date=date.today()))
 results_stats = pd.merge(results, top5_stats_home, on = 'Home', how = 'left')
 results_stats = pd.merge(results_stats, top5_stats_away, on = 'Away', how = 'left')
-"""
+
 
 # making results stats line up with top5_hist df
 
 results_stats_4 = results_stats.drop(['Home','Away','League','Season','Date','Hscore','Ascore','Result','ou','HxG','AxG', 'xResult', 'xTotal','Act_Diff','xG_Diff','Act_vs_Exp_Result'], axis=1)
 
-# top5_hist = pd.read_csv('/Users/matthewfalcona/FalconaForecast/datasets/top5_hist.csv')
+results_stats_4.columns
 
-top5_total_tt = top5_hist.drop(['Wk','Date','Home','Away','Result','ou'], axis = 1)
+results_stats_4 = results_stats_4[['Total', 'gf_x','ga_x','gd_x',
+                                'xg_x','npxg_x','npxG/Sh_x', 'np:G-xG_x',
+                                'prog_x','sca90_x','gca90_x','poss_x','psxg_x',   
+                                'gf_y','ga_y','gd_y',
+                                'xg_y','npxg_y','npxG/Sh_y','np:G-xG_y',
+                                'prog_y','sca90_y','gca90_y', 'poss_y', 'psxg_y']]
+
+results_stats_4.columns
+
+results_stats_4 = results_stats_4[['Total', 'npxg_x', 'npxG/Sh_x', 'np:G-xG_x', 'prog_x',
+                                    'sca90_x', 'gca90_x', 'poss_x', 'psxg_x', 'ga_x', 'gf_x', 'xg_x',
+                                    'gd_x', 'npxg_y', 'npxG/Sh_y', 'np:G-xG_y', 'prog_y', 'sca90_y',
+                                    'gca90_y', 'poss_y', 'psxg_y', 'ga_y', 'gf_y', 'xg_y', 'gd_y']]
+
+top5_hist = pd.read_csv('/Users/matthewfalcona/FalconaForecast/data/top5_hist.csv')
+
+top5_total_tt = top5_hist.drop(['Result','ou','Wk', 'Day', 'Date', 'Time',
+                                'Home', 'xG', 'Score', 'xG.1', 'Away', 'Attendance',
+                                'Venue', 'Referee', 'Match Report', 'Notes',
+                                'Unnamed: 0_x', 'Unnamed: 0_y'], axis = 1)
+
+top5_total_tt.columns
+
+top5_total_tt = top5_total_tt[['Total', 'gf_x','ga_x','gd_x',
+                                'xg_x','npxg_x','npxG/Sh_x', 'np:G-xG_x',
+                                'prog_x','sca90_x','gca90_x','poss_x','psxg_x',   
+                                'gf_y','ga_y','gd_y',
+                                'xg_y','npxg_y','npxG/Sh_y','np:G-xG_y',
+                                'prog_y','sca90_y','gca90_y', 'poss_y', 'psxg_y']]
 
 top5_total_tt = top5_total_tt.append(results_stats_4)
 
+top5_total_tt.head(150)
+
+top5_total_tt = top5_total_tt.dropna()
+top5_total_tt.reset_index(drop=True,inplace=True)
+
 z = top5_total_tt.Total
-w = top5_total_tt.drop('Total', axis = 1)
+w = top5_total_tt.drop(['Total','gd_x','gd_y','npxg_y','npxg_x',
+                        'xg_y','xg_x','np:G-xG_y', 'np:G-xG_x',
+                        'npxG/Sh_x','npxG/Sh_y','psxg_x','psxg_y',
+                        'poss_y','poss_x','prog_y','prog_x'], axis = 1)
+
+w.columns
+
+w = w[['gf_x','ga_x','sca90_x','gca90_x',
+        'gf_y','ga_y','sca90_y','gca90_y']]
 
 w_train,w_test,z_train,z_test=train_test_split(w,z,test_size=0.2)
 
-w_train.shape
-w_test.shape
-z_train.shape
-z_test.shape
+print(w_train.shape)
+print(w_test.shape)
+print(z_train.shape)
+print(z_test.shape)
 
 
 # defining totals model function
 
 def base_model_tot():
     model = Sequential() # for training and inference features
-    model.add(Dense(50, input_dim = 16, kernel_initializer='normal', activation='relu'))
+    model.add(Dense(50, input_dim = 8, kernel_initializer='normal', activation='relu'))
     model.add(Dropout(.1))
     model.add(Dense(1, kernel_initializer='normal', activation='relu'))
     model.compile(loss='mean_squared_logarithmic_error', optimizer='adam', metrics = ['accuracy'])
@@ -2568,7 +2748,19 @@ print(final_time)
 
 # predictions
 
-forecast_total_pred = forecast_sched.drop(columns = ['Home','Away','League','Season','Date','Match'])
+forecast_total_pred = forecast_sched.drop(columns = ['Home','Away','League','Season','Date','Match',
+                                                        'gd_x','gd_y',
+                                                        'prog_y','xg_y','prog_x','xg_x', 'np:G-xG_y', 'np:G-xG_x',
+                                                        'npxG/Sh_x','npxG/Sh_y','psxg_y','psxg_x','poss_x','poss_y','npxg_x','npxg_y'])
+
+#should match w columns
+forecast_total_pred = forecast_total_pred[['gf_x','ga_x','sca90_x','gca90_x',
+                                            'gf_y','ga_y','sca90_y','gca90_y']]
+
+
+print('forecast_total_pred: ')
+print(forecast_total_pred.head(50))
+
 
 forecast_total = model.predict(forecast_total_pred)
 
@@ -2579,7 +2771,7 @@ forecast_total.columns = ['Total_pred']
 print('forecast_total shape:')
 print(forecast_total.shape)
 
-forecast_total.to_csv('/Users/matthewfalcona/FalconaForecast/datasets/forecast_total_{current_date}.csv'.format(current_date=date.today()), index = False)
+forecast_total.to_csv('/Users/matthewfalcona/FalconaForecast/data/forecast_total_{current_date}.csv'.format(current_date=date.today()), index = False)
 
 forecast = forecast.merge(forecast_total, left_index=True, right_index=True)
 #forecast = forecast.join(forecast_total)
@@ -2591,24 +2783,57 @@ print(forecast.head(50))
 ########################################################################################
 
 # creating train and test sets for o/u odds model
-
-results = pd.read_csv('/Users/matthewfalcona/FalconaForecast/datasets/results_{current_date}.csv'.format(current_date=date.today()))
+results = pd.read_csv('/Users/matthewfalcona/FalconaForecast/data/results_{current_date}.csv'.format(current_date=date.today()))
 
 results_stats = pd.merge(results, top5_stats_home, on = 'Home', how = 'left')
 results_stats = pd.merge(results_stats, top5_stats_away, on = 'Away', how = 'left')
 
-results_stats_2 = results_stats.drop(['Home','Away','League','Season','Date','Hscore','Ascore','Result','Total','HxG','AxG', 'xResult', 'xTotal','Act_Diff','xG_Diff','Act_vs_Exp_Result'], axis=1)
+results_stats_2 = results_stats.drop(['Home','Away','League','Season','Date',
+                                        'Hscore','Ascore','Result','Total',
+                                        'HxG','AxG', 'xResult', 'xTotal','Act_Diff',
+                                        'xG_Diff','Act_vs_Exp_Result'], axis=1)
 
-top5_hist = pd.read_csv('/Users/matthewfalcona/FalconaForecast/datasets/top5_hist.csv')
+results_stats_2.columns
+results_stats_2 = results_stats_2[['ou','gf_x','ga_x','gd_x',
+                                    'xg_x','npxg_x','npxG/Sh_x', 'np:G-xG_x',
+                                    'prog_x','sca90_x','gca90_x','poss_x','psxg_x',   
+                                    'gf_y','ga_y','gd_y',
+                                    'xg_y','npxg_y','npxG/Sh_y','np:G-xG_y',
+                                    'prog_y','sca90_y','gca90_y', 'poss_y', 'psxg_y']]
 
-top5_ou_tt = top5_hist.drop(['Wk','Date','Home','Away','Result','Total'], axis = 1)
+top5_hist = pd.read_csv('/Users/matthewfalcona/FalconaForecast/data/top5_hist.csv')
+
+top5_ou_tt = top5_hist.drop(['Result','Total','Wk', 'Day', 'Date', 'Time',
+                                'Home', 'xG', 'Score', 'xG.1', 'Away', 'Attendance',
+                                'Venue', 'Referee', 'Match Report', 'Notes',
+                                'Unnamed: 0_x', 'Unnamed: 0_y'], axis = 1)
+
+top5_ou_tt.columns
+
+top5_ou_tt = top5_ou_tt[['ou','gf_x','ga_x','gd_x',
+                            'xg_x','npxg_x','npxG/Sh_x', 'np:G-xG_x',
+                            'prog_x','sca90_x','gca90_x','poss_x','psxg_x',   
+                            'gf_y','ga_y','gd_y',
+                            'xg_y','npxg_y','npxG/Sh_y','np:G-xG_y',
+                            'prog_y','sca90_y','gca90_y', 'poss_y', 'psxg_y']]
 
 top5_ou_tt = top5_ou_tt.append(results_stats_2)
 
-top5_ou_tt = top5_hist.drop(['Wk','Date','Home','Away','Total','Result'], axis = 1)
+top5_ou_tt = top5_ou_tt.dropna()
+top5_ou_tt.reset_index(drop=True,inplace=True)
+
 
 b = top5_ou_tt.ou
-a = top5_ou_tt.drop('ou', axis = 1)
+a = top5_ou_tt.drop(['ou','gd_x','gd_y','npxg_y','npxg_x',
+                        'xg_y','xg_x','np:G-xG_y', 'np:G-xG_x',
+                        'npxG/Sh_x','npxG/Sh_y','psxg_x','psxg_y',
+                        'poss_y','poss_x','prog_y','prog_x'], axis = 1)
+
+a.columns
+
+a = a[['gf_x','ga_x','sca90_x','gca90_x',
+        'gf_y','ga_y','sca90_y','gca90_y']]
+
 
 a_train,a_test,b_train,b_test=train_test_split(a,b,test_size=0.2)
 
@@ -2638,7 +2863,7 @@ print(b_train.shape)
 
 def base_model():
     model = Sequential() # for training and inference features
-    model.add(Dense(50, input_dim = 16, kernel_initializer='normal', activation='tanh'))
+    model.add(Dense(50, input_dim = 8, kernel_initializer='normal', activation='tanh'))
     model.add(Dropout(.1))
     model.add(Dense(2, kernel_initializer='normal', activation='softmax'))
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics = ['accuracy'])
@@ -2665,7 +2890,16 @@ print(final_time)
 
 # predictions
 
-forecast_ou_pred = forecast_sched.drop(columns = ['Home','Away','League','Season','Date','Match'])
+forecast_ou_pred = forecast_sched.drop(columns = ['Home','Away','League','Season','Date','Match',
+                                                        'gd_x','gd_y',
+                                                        'prog_y', 'xg_y','prog_x','xg_x', 'np:G-xG_y', 'np:G-xG_x',
+                                                        'npxG/Sh_x','npxG/Sh_y','psxg_y','psxg_x','poss_x','poss_y','npxg_x','npxg_y'])
+
+#matches a
+forecast_ou_pred = forecast_ou_pred[['gf_x','ga_x','sca90_x','gca90_x',
+                                        'gf_y','ga_y','sca90_y','gca90_y']]
+print('forecast_ou_pred: ')
+print(forecast_ou_pred.head(50))
 
 forecast_ou = model.predict(forecast_ou_pred)
 
@@ -2676,7 +2910,7 @@ forecast_ou.columns = ['Over_pred','Under_pred']
 print('forecast_ou shape:')
 print(forecast_ou.shape)
 
-forecast_ou.to_csv('/Users/matthewfalcona/FalconaForecast/datasets/forecast_ou_{current_date}.csv'.format(current_date=date.today()), index = False)
+forecast_ou.to_csv('/Users/matthewfalcona/FalconaForecast/data/forecast_ou_{current_date}.csv'.format(current_date=date.today()), index = False)
 
 
 forecast = forecast.merge(forecast_ou, left_index=True, right_index=True)
@@ -2689,13 +2923,13 @@ print(forecast.head(50))
 ###############################################################################################
 # formatting forecast df
 
-forecast = forecast.drop(['npxg_x','npxG/Sh_x','np:G-xG_x','Prog_x','SCA90_x','GCA90_x','Poss_x','psxg_x','npxg_y','npxG/Sh_y','np:G-xG_y','Prog_y','SCA90_y','GCA90_y','Poss_y','psxg_y'],axis=1)
+#forecast = forecast.drop(['npxg_x','npxG/Sh_x','np:G-xG_x','Prog_x','SCA90_x','GCA90_x','Poss_x','psxg_x','npxg_y','npxG/Sh_y','np:G-xG_y','Prog_y','SCA90_y','GCA90_y','Poss_y','psxg_y'],axis=1)
 
-forecast.columns = ['Home','Away','League','Season','Date','Match','Away_pred','Draw_pred','Home_pred','Total_pred','Over_pred','Under_pred']
+#forecast.columns = ['Home','Away','League','Season','Date','Match','Away_pred','Draw_pred','Home_pred','Total_pred','Over_pred','Under_pred']
 
 forecast1 = forecast[['Home','Away','League','Season','Date','Match','Home_pred','Draw_pred','Away_pred','Total_pred','Over_pred','Under_pred']]
 
-forecast1.to_csv('/Users/matthewfalcona/FalconaForecast/datasets/forecast_{current_date}.csv'.format(current_date=date.today()), index = False)
+forecast1.to_csv('/Users/matthewfalcona/FalconaForecast/data/forecast_{current_date}.csv'.format(current_date=date.today()), index = False)
 
 ###############################################################################################
 # putting it all together with live odds
@@ -2737,7 +2971,7 @@ print('Forecast w odds')
 print(forecast_w_odds.shape)
 print(forecast_w_odds.head(50))
 
-forecast_w_odds.to_csv('/Users/matthewfalcona/FalconaForecast/datasets/forecast_w_odds_{current_date}.csv'.format(current_date=date.today()), index = False)
+forecast_w_odds.to_csv('/Users/matthewfalcona/FalconaForecast/data/forecast_w_odds_{current_date}.csv'.format(current_date=date.today()), index = False)
 
 forecast_dropna = forecast_w_odds.dropna()
 
@@ -2749,15 +2983,18 @@ print(forecast_dropna.head(50))
 ###################################################
 # power ratings
 
-pwr_stats = pd.read_csv('/Users/matthewfalcona/FalconaForecast/datasets/top5_stats_{current_date}.csv'.format(current_date=date.today()))
-pwr_results = pd.read_csv('/Users/matthewfalcona/FalconaForecast/datasets/results_{current_date}.csv'.format(current_date=date.today()))
+pwr_stats = pd.read_csv('/Users/matthewfalcona/FalconaForecast/data/top5_stats_{current_date}.csv'.format(current_date=date.today()))
+pwr_results = pd.read_csv('/Users/matthewfalcona/FalconaForecast/data/forecast_sched_{current_date}.csv'.format(current_date=date.today()))
 leagues = pwr_results[['Away','League']]
-leagues.columns = ['Squad','League']
+leagues.columns = ['squad','League']
 leagues = leagues.drop_duplicates()
-pwr_stats = pd.merge(pwr_stats, leagues, on='Squad', how='left')
-pwr_stats = pwr_stats[['Squad','League','npxg','psxg','npxG/Sh','np:G-xG','GCA90','SCA90','Prog','Poss']]
+pwr_stats = pd.merge(pwr_stats, leagues, on='squad', how='left')
+pwr_stats = pwr_stats[['squad','League','ga','poss','gca90','sca90','prog','npxg']]
 
-# feature importance
+
+# old feature importance
+
+"""
 GCA90 = .3136
 psxg = .2332
 SCA90 = .1415
@@ -2766,25 +3003,34 @@ npGxG = .1212
 Poss = .0428
 npxg = .0244
 npxGSh = 0.00
+"""
+# new feature importance
+
+
+gca90 = .0878
+ga = .0558
+poss = .009
+sca90 = .0085
+prog = .0051
+npxg = .0015
+
 
 stats_power = pwr_stats
 stats_power['npxg_pwr'] = stats_power['npxg'] * npxg
-stats_power['psxg_pwr'] = stats_power['psxg'] * psxg
-stats_power['npxG/Sh_pwr'] = stats_power['npxG/Sh'] * npxGSh
-stats_power['np:G-xG_pwr'] = stats_power['np:G-xG'] * npGxG
-stats_power['GCA90_pwr'] = stats_power['GCA90'] * GCA90
-stats_power['SCA90_pwr'] = stats_power['SCA90'] * SCA90
-stats_power['Prog_pwr'] = stats_power['Prog'] * Prog
-stats_power['Poss_pwr'] = stats_power['Poss'] * Poss
-stats_power['raw_rating'] = stats_power.iloc[:, -8:-1].sum(axis=1)
+stats_power['ga_pwr'] = stats_power['ga'] * ga * -1
+stats_power['gca90_pwr'] = stats_power['gca90'] * gca90
+stats_power['sca90_pwr'] = stats_power['sca90'] * sca90
+stats_power['prog_pwr'] = stats_power['prog'] * prog
+stats_power['raw_rating'] = (stats_power['npxg_pwr']+stats_power['ga_pwr']+stats_power['gca90_pwr']+stats_power['sca90_pwr']+stats_power['prog_pwr'])
+
 
 # uefa league coefficient
 
-epl_pwr = 1.296163228
-laliga_pwr = 1.17887628
-seriea_pwr = 0.9389411755
-bun_pwr = 0.9112228887
-ligue1_pwr = 0.6747964285
+epl_pwr = 1.286318398*.9
+laliga_pwr = 1.135606518*.9
+seriea_pwr = 0.885118409*.9
+bun_pwr = 0.971105755*.9
+ligue1_pwr = 0.72185092*.9
 
 conditions = [
     (stats_power['League'] == 'Premier League'),
@@ -2794,14 +3040,17 @@ conditions = [
     (stats_power['League'] == 'Ligue 1')
     ]
 
-values = [stats_power['raw_rating'] + epl_pwr, stats_power['raw_rating'] + laliga_pwr, stats_power['raw_rating'] + seriea_pwr, stats_power['raw_rating'] + bun_pwr, stats_power['raw_rating'] + ligue1_pwr]
+values = [stats_power['raw_rating'] * epl_pwr, stats_power['raw_rating'] * laliga_pwr, stats_power['raw_rating'] * seriea_pwr, stats_power['raw_rating'] * bun_pwr, stats_power['raw_rating'] * ligue1_pwr]
 
 stats_power['power_rating'] = np.select(conditions, values)
 
+stats_power = stats_power.sort_values(by=['power_rating'], ascending=False)
+stats_power.reset_index(drop=True,inplace=True)
+
 print('power ratings:')
-print(stats_power.head())
-stats_power.to_csv('/Users/matthewfalcona/FalconaForecast/datasets/power_rating_stats_{current_date}.csv'.format(current_date=date.today()), index = False)
+print(stats_power.head(50))
+stats_power.to_csv('/Users/matthewfalcona/FalconaForecast/data/power_rating_stats_{current_date}.csv'.format(current_date=date.today()), index = False)
 
-power_rating = stats_power[['Squad','League','power_rating']]
+power_rating = stats_power[['squad','League','power_rating']]
 
-power_rating.to_csv('/Users/matthewfalcona/FalconaForecast/datasets/power_rating_{current_date}.csv'.format(current_date=date.today()), index = False)
+power_rating.to_csv('/Users/matthewfalcona/FalconaForecast/data/power_rating_{current_date}.csv'.format(current_date=date.today()), index = False)
