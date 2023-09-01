@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BigQuery Web App</title>
+</head>
+<body>
+    <h1>Falcona Forecast</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Home</th>
+                <th>Away</th>
+                <!-- Add more headers for additional columns if needed -->
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+            <tr>
+                <td>{{ row.Home }}</td>
+                <td>{{ row.Away }}</td>
+                <!-- Add more td elements for additional columns if needed -->
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
