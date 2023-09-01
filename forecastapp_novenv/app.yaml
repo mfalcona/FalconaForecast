@@ -1,6 +1,6 @@
 #env: flex
 runtime: python38
-entrypoint: python3 app.py
+entrypoint: gunicorn -b :5000 main:app
 handlers:
 - url: /.*
   script: auto
