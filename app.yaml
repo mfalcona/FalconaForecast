@@ -1,0 +1,6 @@
+#env: flex
+runtime: python38
+entrypoint: python3 app.py
+handlers:
+- url: /.*
+  script: auto
